@@ -6,179 +6,133 @@
 с товаром вида i в i-ю стопку.
 """
 
-MAX_STACKS = 500
-MAX_CONTAINERS = 500
-
+class Node:
+    """Узел односвязного списка для стека"""
+    def __init__(self, data):
+        self.data = data
+        self.next = None
 
 class Stack:
-    """Класс для работы со стопками контейнеров."""
-
+    """Реализация стека через односвязный список"""
     def __init__(self, name):
-        self.items = []
+        self.top = None
         self.name = name
+        self.size = 0
 
     def push(self, item):
-        self.items.append(item)
+        """Добавление элемента на вершину стека"""
+        new_node = Node(item)
+        new_node.next = self.top
+        self.top = new_node
+        self.size += 1
 
     def pop(self):
-        if not self.is_empty():
-            return self.items.pop()
-        raise IndexError("Попытка взять контейнер из пустой стопки")
+        """Извлечение элемента с вершины стека"""
+        if self.is_empty():
+            raise IndexError("Попытка взять контейнер из пустой стопки")
+        item = self.top.data
+        self.top = self.top.next
+        self.size -= 1
+        return item
 
     def peek(self):
-        if not self.is_empty():
-            return self.items[-1]
-        return None
+        """Просмотр верхнего элемента без извлечения"""
+        return self.top.data if not self.is_empty() else None
 
     def is_empty(self):
-        return len(self.items) == 0
-
-    def size(self):
-        return len(self.items)
+        """Проверка на пустоту"""
+        return self.top is None
 
     def __str__(self):
-        return f"{self.name}: {self.items}"
+        """Визуализация стека"""
+        items = []
+        current = self.top
+        while current:
+            items.append(str(current.data))
+            current = current.next
+        return f"{self.name}: [{', '.join(reversed(items))}]" if items else f"{self.name}: []"
 
-
-def print_stacks(main_stacks, temp_stacks):
-    """Выводит текущее состояние стопок."""
-    print("\nТекущее расположение контейнеров:")
-    for stack in main_stacks + temp_stacks:
-        if not stack.is_empty():
-            print(f"{stack.name}: {stack.items}")
-    print("------")
-
-
-def validate_input(parts, stack_num, num_stacks):
-    """Проверяет корректность введенных данных."""
-    if not parts:
-        raise ValueError(f"Пустой ввод для стопки {stack_num}")
-
-    try:
-        ki = int(parts[0])
-    except ValueError:
-        raise ValueError(f"Некорректное количество контейнеров в стопке {stack_num}")
-
-    if ki < 0:
-        raise ValueError(f"Отрицательное количество контейнеров в стопке {stack_num}")
-
-    if len(parts) - 1 != ki:
-        raise ValueError(
-            f"Несоответствие количества контейнеров в стопке {stack_num}. "
-            f"Ожидалось {ki}, получено {len(parts) - 1}"
-        )
-
-    for elem in parts[1:]:
+def get_valid_num_stacks():
+    """Функция для получения корректного количества стопок"""
+    while True:
         try:
-            elem_int = int(elem)
+            num = int(input("Введите количество стопок (1-500): "))
+            if 1 <= num <= 500:
+                return num
+            print("Ошибка: количество стопок должно быть от 1 до 500")
         except ValueError:
-            raise ValueError(f"Некорректный тип контейнера в стопке {stack_num}")
-
-        if elem_int < 1 or elem_int > num_stacks:
-            raise ValueError(
-                f"Недопустимый тип контейнера {elem} в стопке {stack_num}. "
-                f"Допустимы значения от 1 до {num_stacks}"
-            )
-
+            print("Ошибка: введите целое число")
 
 def solve_containers():
-    """Основная функция решения задачи."""
+    """Основная логика программы"""
     print("=== Программа для расстановки контейнеров ===")
     print("Условие: нужно расставить контейнеры так, чтобы в i-й стопке")
     print("находились только контейнеры типа i\n")
 
-    try:
-        num_stacks = int(input("Введите количество стопок (1-500): "))
-        if num_stacks < 1 or num_stacks > MAX_STACKS:
-            raise ValueError(f"Количество стопок должно быть от 1 до {MAX_STACKS}")
-    except ValueError as e:
-        print(f"Ошибка: {e}")
-        return
+    # Получаем корректное количество стопок
+    num_stacks = get_valid_num_stacks()
 
-    main_stacks = [Stack(f"Стопка-{i + 1}") for i in range(num_stacks)]
-    temp_stacks = [Stack(f"Временная-{num_stacks + i + 1}") for i in range(num_stacks)]
+    stacks = [Stack(f"Стопка-{i+1}") for i in range(num_stacks)]
+    temp_stacks = [Stack(f"Временная-{num_stacks+i+1}") for i in range(num_stacks)]
 
-    print("\nВведите данные для каждой стопки:")
-    print("Формат: <количество> <типы контейнеров снизу вверх>")
-    print("Пример: 3 1 2 1 - стопка с 3 контейнерами: 1 (низ), 2, 1 (верх)")
-
+    # Ввод данных
+    print("\nВведите для каждой стопки: количество контейнеров и их типы (снизу вверх)")
+    print("Например:")
+    print("2")
+    print("3 2 1 2")
+    print("1 1")
     for i in range(num_stacks):
         while True:
             try:
-                input_str = input(f"Стопка-{i + 1}: ").strip()
-                parts = list(map(str, input_str.split())) if input_str else ['0']
-
-                validate_input(parts, i + 1, num_stacks)
+                parts = input(f"Стопка-{i+1}: ").split()
+                if not parts:
+                    parts = ['0']
 
                 ki = int(parts[0])
+                if ki < 0:
+                    raise ValueError("Количество не может быть отрицательным")
+                if len(parts) - 1 != ki:
+                    raise ValueError(f"Ожидалось {ki} контейнеров, получено {len(parts)-1}")
+
                 for elem in parts[1:]:
-                    main_stacks[i].push(int(elem))
+                    container_type = int(elem)
+                    if not 1 <= container_type <= num_stacks:
+                        raise ValueError(f"Тип контейнера должен быть от 1 до {num_stacks}")
+                    stacks[i].push(container_type)
                 break
-
             except ValueError as e:
-                print(f"Ошибка: {e}. Пожалуйста, введите данные снова.")
-            except Exception as e:
-                print(f"Ошибка: {e}. Пожалуйста, введите данные снова.")
+                print(f"Ошибка: {e}. Должно быть число (кол-во контейнеров в стопке) и типы контейнеров (от 1 до N). Повторите ввод.")
 
-    print("\nНачальное расположение контейнеров:")
-    print_stacks(main_stacks, temp_stacks)
-
-    def is_correct():
-        """Проверяет правильность расположения контейнеров."""
-        for i in range(num_stacks):
-            for elem in main_stacks[i].items:
-                if elem != i + 1:
-                    return False
-        return True
-
-    if is_correct():
+    # Проверка начального состояния
+    if all(stack.peek() == i+1 for i, stack in enumerate(stacks) if not stack.is_empty()):
         print("Контейнеры уже правильно расположены!")
         return
 
     operations = []
 
-    try:
-        # Фаза 1: Распределение по временным стопкам
-        for i in range(num_stacks):
-            while not main_stacks[i].is_empty():
-                elem = main_stacks[i].pop()
-                if elem < 1 or elem > num_stacks:
-                    raise ValueError(f"Недопустимый тип контейнера {elem}")
+    # Фаза 1: Распределение по временным стопкам
+    for i in range(num_stacks):
+        while not stacks[i].is_empty():
+            container = stacks[i].pop()
+            target = container - 1
+            temp_stacks[target].push(container)
+            operations.append(f"{stacks[i].name} -> {temp_stacks[target].name}")
 
-                target_stack = elem - 1
-                temp_stacks[target_stack].push(elem)
-                op = f"Переместить из {main_stacks[i].name} в {temp_stacks[target_stack].name}"
-                operations.append(op)
-                print(f"Операция {len(operations)}: {op}")
-                print_stacks(main_stacks, temp_stacks)
+    # Фаза 2: Сборка в целевые стопки
+    for i in range(num_stacks):
+        while not temp_stacks[i].is_empty():
+            container = temp_stacks[i].pop()
+            stacks[i].push(container)
+            operations.append(f"{temp_stacks[i].name} -> {stacks[i].name}")
 
-        # Фаза 2: Перемещение в основные стопки
-        for i in range(num_stacks):
-            while not temp_stacks[i].is_empty():
-                elem = temp_stacks[i].pop()
-                main_stacks[i].push(elem)
-                op = f"Переместить из {temp_stacks[i].name} в {main_stacks[i].name}"
-                operations.append(op)
-                print(f"Операция {len(operations)}: {op}")
-                print_stacks(main_stacks, temp_stacks)
-
-        if not is_correct():
-            print("\nРезультат: задача не имеет решения")
-            return
-
-        print("\nВсе операции перемещения:")
+    # Проверка результата
+    if all(stack.peek() == i+1 for i, stack in enumerate(stacks) if not stack.is_empty()):
+        print("\nПоследовательность перемещений:")
         for i, op in enumerate(operations, 1):
             print(f"{i}. {op}")
-
-        print("\nФинальное расположение контейнеров:")
-        print_stacks(main_stacks, temp_stacks)
-        print("=== Задача успешно решена! ===")
-
-    except IndexError as e:
-        print(f"\nОшибка: {e}")
-    except Exception as e:
-        print(f"\nОшибка: {e}")
-
+        print("\nЗадача решена!")
+    else:
+        print("Задача не имеет решения")
 
 if __name__ == "__main__":
     solve_containers()
